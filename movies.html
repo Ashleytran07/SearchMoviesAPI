@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Movies API</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+	<style>
+		.table th, .table td {
+			text-align: center;
+			vertical-align: middle;
+		}
+        img{
+            width: 25%;
+            height: auto;
+            display: block;
+        }
+        small{
+            margin-right: 500px;
+        }
+
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<h1 class="col-12 mt-4">Movies API</h1>
+		</div> <!-- .row -->
+
+		<div class="row">
+			<form class="col-12" id="search-form">
+				<div class="form-row">
+					<div class="col-12 mt-4 col-sm-6 col-lg-4">
+						<label for="search-term" class="sr-only">Search:</label>
+						<input type="text" class="form-control" id="search-term" placeholder="Search...">
+					</div>
+					<div class="col-12 mt-4 col-sm-4 col-md-3 col-lg-2">
+						<label for="search-limit" class="sr-only">Number of results:</label>
+						<select class="form-control" id="search-limit">
+							<option value="5">5 results</option>
+							<option value="10">10 results</option>
+							<option value="25">25 results</option>
+							<option value="50">50 results</option>
+							<option value="100">100 results</option>
+						</select>
+					</div>
+					<div class="col-12 mt-4 col-sm-auto">
+						<button type="submit" class="btn btn-primary">Search</button>
+                        <small id="search-error" class="form-text text-danger">Please enter your search</small>
+					</div>
+				</div> <!-- .form-row -->
+			</form>
+		</div> <!-- .row -->
+
+		<div class="col-12 mt-4">
+			<div class>
+				Showing <span id="num-results" class="font-weight-bold">0</span> result(s).
+			</div>
+
+            <!-- <div> -->
+
+            <div class="row">
+
+                <div class="w-100 mt-3">
+                    <ul id="list-header" class="list-group">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <div class="poster-image w-50">Poster</div>
+                            <div class="title">Title</div>
+                            <div class="release-date">Release Date</div>
+                            <div class="vote-average">Vote Average</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- </div> -->
+
+				<div id="listOfMovies" class= "row">
+                    <div class="col-12 col-sm-8 mt-3">
+
+        
+                        <ul id="movies-list" class="list-group">
+                            
+                            <li class="list-group-item d-flex justify-content-between">
+                                <div class="movie-poster"><img src="img/usc.jpeg" alt="USC Logo"></div>
+                                <div class="movie-title">Movie 1</div>
+                                <div class="movie-release">release time</div>
+                                <div class="movie-vote">vote</div>
+                            </li>
+        
+                        </ul>
+        
+                    </div> <!-- .col -->
+                </div> <!-- .row -->
+		</div> <!-- .row -->
+
+	</div> <!-- .container -->
+    
+	<script src="http://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+	<script>
+        var playingNow = "https://api.themoviedb.org/3/movie/now_playing?api_key=60cc857115af3106c24a2dc276a43e7c&language=en-US&page=1"
+        const limit = document.querySelector('#search-limit').value.trim();
+        // DEFAULT: Playing Now
+        $.ajax({
+				url: playingNow,
+				dataType: 'json',
+				success: function(data) {
+					console.log(data)
+					document.querySelector("#num-results").innerHTML = limit + " of " + data.total_results
+					
+                    
+                    document.querySelector("#listOfMovies").innerHTML = ''
+
+                    for(i = 0; i < limit; i++){
+                        createRow(data.results[i])
+                    }
+
+				},
+				error: function(e) {
+					alert("AJAX error")
+					console.log(e)
+				}
+			})
+
+
+		document.querySelector('#search-form').onsubmit = function(){
+			// console.log("Inside submit")
+            var link = "https://api.themoviedb.org/3/search/movie?api_key=60cc857115af3106c24a2dc276a43e7c&language=en-US&query="
+			const term = document.querySelector('#search-term').value.trim();
+			const limit = document.querySelector('#search-limit').value.trim();
+            const secondHalf = "&page=1&include_adult=false"
+
+            let validForm = true
+        
+            if(term.length === 0){
+                validForm = false
+				document.querySelector("#search-error").innerHTML = "Please enter your search"
+            }
+
+			$.ajax({
+				url: link + term + secondHalf,
+				dataType: 'json',
+				success: function(data) {
+					console.log(data)
+					document.querySelector("#num-results").innerHTML = limit + " of " + data.total_results
+					// console.log(data.results)
+                    
+                    document.querySelector("#listOfMovies").innerHTML = ''
+                    
+					for (result of data.results) {
+						createRow(result)
+					}
+
+				},
+				error: function(e) {
+					alert("AJAX error")
+					console.log(e)
+				}
+			})
+
+
+			return false;
+		}
+
+
+		function createRow(movie){
+			var listMovies = document.createElement('li');
+			var divPoster = document.createElement('div');
+            var posterImg = document.createElement('img')
+			var divTitle = document.createElement('div');
+			var divRelease = document.createElement('div');
+            var divVote = document.createElement('div');
+
+
+            //add content
+			divTitle.innerHTML = movie.title; 
+			divRelease.innerHTML = movie.release_date; 
+            divVote.innerHTML = movie.vote_average;
+
+            if(movie.poster_path == null){
+                posterImg.src= "img/usc.jpeg"
+                posterImg.alt = "USC Logo" 
+
+            }else{
+                posterImg.src= "http://image.tmdb.org/t/p/w500" + movie.poster_path;
+                posterImg.alt = movie.title + " Cover"; 
+            }
+
+            
+            //DOM structure
+            divPoster.appendChild(posterImg)
+            listMovies.appendChild(divPoster)
+            listMovies.appendChild(divTitle)
+            listMovies.appendChild(divRelease)
+            listMovies.appendChild(divVote)
+
+            //add classes
+            listMovies.classList.add("list-group-item", "w-100" , "d-flex", "justify-content-between")
+            divPoster.classList.add("movie-poster")
+            divTitle.classList.add("movie-title")
+            divRelease.classList.add("movie-release")
+            divVote.classList.add("movie-vote")
+
+            document.querySelector("#listOfMovies").appendChild(listMovies)
+
+
+
+
+		}
+
+	</script>
+</body>
+</html>
